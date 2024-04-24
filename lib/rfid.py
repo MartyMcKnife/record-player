@@ -1,28 +1,29 @@
 from pn532pi import Pn532, Pn532I2c, pn532
 import time
 
+
 def readData(nfc: Pn532, uid: str) -> str:
     # Check if our NFC tag is the type we expect
-    if (len(uid) == 7):
+    if len(uid) == 7:
         # User data is stored between pages 4 and 215 in 4x2 bit chunks
         # We want everything from the last bit of page 5 onwards
         hexArray = []
-           
+
         run = True
-    
-        for page in range(5,216):
+
+        for page in range(5, 216):
             if run:
                 success, raw = nfc.mifareultralight_ReadPage(page)
                 if success:
                     # loop through our page chunk
                     for item in raw:
                         # once we start reading '0' bits that means we have read all the available data on the rfid tag
-                        if item ==0:
+                        if item == 0:
                             run = False
                             break
                         else:
                             hexArray.append(item)
-                #tiny break to reset i2c device
+                # tiny break to reset i2c device
                 time.sleep(0.0000001)
             else:
                 break
@@ -32,7 +33,7 @@ def readData(nfc: Pn532, uid: str) -> str:
         del hexArray[:5]
 
         # Decode our full array and return it as a string
-        return ''.join(chr(i) for i in hexArray)
+        return "".join(chr(i) for i in hexArray)
 
 
 # test code to make sure reader is working
@@ -43,8 +44,10 @@ if __name__ == "__main__":
     nfc.SAMConfig()
     while True:
         print("waiting for card...")
-        success, uid = nfc.readPassiveTargetID(pn532.PN532_MIFARE_ISO14443A_106KBPS)
-        
+        success, uid = nfc.readPassiveTargetID(
+            pn532.PN532_MIFARE_ISO14443A_106KBPS
+        )
+
         if success:
             print(readData(nfc, uid))
             break

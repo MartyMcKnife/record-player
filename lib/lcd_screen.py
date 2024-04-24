@@ -1,7 +1,8 @@
 from luma.core.render import canvas
-from luma.oled.device import ssd1309, ssd1306
-from luma.core.interface.serial import i2c
-from PIL import Image
+from luma.oled.device import ssd1309
+from luma.emulator import device
+from PIL import Image, ImageFont
+from luma.core.virtual import viewport
 
 import time
 import segno
@@ -9,7 +10,7 @@ import io
 
 
 class display:
-    def __init__(self, device: ssd1309, px=8, py=8):
+    def __init__(self, device: ssd1309, px=8, py=4):
         self.device = device
         self.px = px
         self.py = py
@@ -21,11 +22,12 @@ class display:
 
     def draw_qrcode(self, link: str):
         # generate our qr code
+
         # this code keeps it in buffer, so we don't waste any file space
         qrcode = segno.make(link)
         out = io.BytesIO()
         # makes the qr code have a dark background and white pixels
-        qrcode.save(out, kind="png", scale=4, dark="white", light=None)
+        qrcode.save(out, kind="png", dark="white", light=None)
         out.seek(0)
 
         # let pillow grab our qrcode
@@ -44,8 +46,33 @@ class display:
         # display!
         device.display(screen)
 
+    def no_songs(self):
+        with canvas(self.device) as draw:
+            draw.font = ImageFont("fonts/NotoSans-Medium.tff")
+            x_length = draw.textlength("No music currently playing!")
+            draw.text(
+                ((device.width - x_length) / 2, self.py),
+                "No music currently playing!",
+            )
+
+    def draw_songInfo(
+        self, songName: str, songArtist: str, songAlbum: str, totalLength: int
+    ):
+        start_time = 0
+
+        # create callback function to increase time
+        def increase_time(current_time: int):
+            return start_time + current_time
+
+        virtual = viewport(self.device, width=1024, height=device.height)
+        with canvas(virtual) as draw:
+            draw.font = ImageFont("fonts/NotoSans-Medium.tff")
+
+            # line1Length = draw.textlength(songName)
+            # if (line1Length > (int(device.width) - self.px)):
+
 
 if __name__ == "__main__":
-    serial = i2c(port=1, address=0x3C)
-    device = ssd1306(serial)
+    device = device.pygame()
     display(device).draw_qrcode("https://www.google.com")
+    time.sleep(10)
