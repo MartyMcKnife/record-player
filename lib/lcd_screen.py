@@ -1,12 +1,18 @@
 from luma.core.render import canvas
 from luma.oled.device import ssd1309
-from luma.emulator import device
-from PIL import Image, ImageFont
+from luma.emulator import device as d
+from PIL import Image, ImageFont, ImageDraw
 from luma.core.virtual import viewport
 
 import time
 import segno
 import io
+import os
+import textwrap
+
+ImageDraw.ImageDraw.font = ImageFont.truetype(
+    os.path.dirname(__file__) + "/fonts/NotoSans-Medium.ttf"
+)
 
 
 class display:
@@ -15,10 +21,26 @@ class display:
         self.px = px
         self.py = py
 
-    def draw_text(self, text: str, duration: int):
+    def draw_text(self, text: str, gap: int = 25):
         with canvas(self.device) as draw:
-            draw.text((30, 40), "Please scan QR Code to authenticate")
-            time.sleep(duration)
+            # break up our text into lines based on the width of the device
+            para = textwrap.wrap(text, width=self.device.width / 4)
+
+            # loop through every line
+            for i, line in enumerate(para):
+                # get our bounding box of our text to offset correctly
+                _, _, w, h = draw.textbbox((0, 0), line)
+                # draw our text!
+                draw.text(
+                    (
+                        # center horizontally
+                        (self.device.width - w) / 2,
+                        # center vertically
+                        # we add a gap to each subsequent element so our text doesn't overlap massively
+                        (self.device.height - h + (gap * (i - 1))) / 2,
+                    ),
+                    line,
+                )
 
     def draw_qrcode(self, link: str):
         # generate our qr code
@@ -44,11 +66,10 @@ class display:
         screen.paste(img, (x, y))
 
         # display!
-        device.display(screen)
+        self.device.display(screen)
 
     def no_songs(self):
         with canvas(self.device) as draw:
-            draw.font = ImageFont("fonts/NotoSans-Medium.tff")
             x_length = draw.textlength("No music currently playing!")
             draw.text(
                 ((device.width - x_length) / 2, self.py),
@@ -66,13 +87,11 @@ class display:
 
         virtual = viewport(self.device, width=1024, height=device.height)
         with canvas(virtual) as draw:
-            draw.font = ImageFont("fonts/NotoSans-Medium.tff")
-
-            # line1Length = draw.textlength(songName)
+            line1Length = draw.textlength(songName)
             # if (line1Length > (int(device.width) - self.px)):
 
 
 if __name__ == "__main__":
-    device = device.pygame()
+    device = d.pygame()
     display(device).draw_qrcode("https://www.google.com")
     time.sleep(10)
