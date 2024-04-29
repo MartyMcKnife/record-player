@@ -5,7 +5,9 @@ import os
 
 load_dotenv()
 
-scope = "user-read-playback-state user-modify-playback-state user-library-read"
+scope = (
+    "user-read-playback-state user-modify-playback-state user-library-read"
+)
 
 # generate our auth instance
 spOauth = SpotifyOAuth(
@@ -39,5 +41,5 @@ def getUrl():
 # return our authorized token and store our code in cache
 def authUser(returnUrl: str):
     code = spOauth.parse_auth_response_url(returnUrl)
-    auth = spOauth.get_access_token(code=code)
-    return spotipy.Spotify(auth=auth)
+    auth = spOauth.get_access_token(code)
+    return spotipy.Spotify(auth=auth["access_token"])

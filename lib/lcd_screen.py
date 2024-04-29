@@ -2,13 +2,13 @@ from luma.core.render import canvas
 from luma.oled.device import ssd1309
 from luma.emulator import device as d
 from PIL import Image, ImageFont, ImageDraw
-from luma.core.virtual import viewport
 
 import time
 import segno
 import io
 import os
 import textwrap
+import datetime
 
 ImageDraw.ImageDraw.font = ImageFont.truetype(
     os.path.dirname(__file__) + "/fonts/NotoSans-Medium.ttf"
@@ -20,6 +20,12 @@ class display:
         self.device = device
         self.px = px
         self.py = py
+
+    def millisecond_convert(self, time: int):
+        seconds = int(time / 1000) % 60
+        minutes = int(time / (1000 * 60)) % 60
+        dt = datetime.time(0, minutes, seconds)
+        return dt.strftime("%M:%S")
 
     def draw_text(self, text: str, gap: int = 25):
         with canvas(self.device) as draw:
@@ -77,7 +83,13 @@ class display:
             )
 
     def draw_songInfo(
-        self, songName: str, songArtist: str, songAlbum: str, totalLength: int
+        self,
+        songName: str,
+        songArtist: str,
+        songAlbum: str,
+        totalDuration: int,
+        currentDuration: int,
+        gap: int = 15,
     ):
         start_time = 0
 
@@ -85,10 +97,88 @@ class display:
         def increase_time(current_time: int):
             return start_time + current_time
 
-        virtual = viewport(self.device, width=1024, height=device.height)
-        with canvas(virtual) as draw:
-            line1Length = draw.textlength(songName)
-            # if (line1Length > (int(device.width) - self.px)):
+        with canvas(self.device) as draw:
+            # draw each info point on our screen
+            # if it is gonna be wider than our screen width with padding, we left align it so the scroll looks cleaner
+            # otherwise it is middle aligned
+            line1length = draw.textlength(songName)
+            draw.text(
+                (self.px, self.py),
+                songName,
+                anchor=(
+                    "mm"
+                    if line1length > self.device.width - (self.px * 2)
+                    else "lm"
+                ),
+            )
+
+            line2length = draw.textlength(songArtist)
+            draw.text(
+                (self.px, self.py + gap),
+                songArtist,
+                anchor=(
+                    "mm"
+                    if line2length > self.device.width - (self.px * 2)
+                    else "lm"
+                ),
+            )
+
+            line3length = draw.textlength(songAlbum)
+            draw.text(
+                (self.px, self.py + gap * 2),
+                songAlbum,
+                anchor=(
+                    "mm"
+                    if line3length > self.device.width - (self.px * 2)
+                    else "lm"
+                ),
+            )
+
+            # draw our progress bar
+            # take off the progress time at the end
+            progressText = f"{self.millisecond_convert(currentDuration)} / {self.millisecond_convert(totalDuration)}"
+            progressTextPaddding = 4
+            textLength = draw.textlength(progressText)
+            progressLength = textLength + self.px + progressTextPaddding
+
+            # draw rectangle outline
+            draw.rectangle(
+                (
+                    self.px,
+                    self.py + gap * 3,
+                    self.device.width - progressLength,
+                    self.py + gap * 3 + 10,
+                ),
+                outline="white",
+            )
+            print(currentDuration / totalDuration)
+            # draw rectangle fill
+            # fill is calculated as a percentage of full length, based on the current / rem duration
+            draw.rectangle(
+                (
+                    self.px,
+                    self.py + gap * 3,
+                    self.px
+                    + (
+                        (currentDuration / totalDuration)
+                        * (self.device.width - progressLength)
+                    ),
+                    self.py + gap * 3 + 10,
+                ),
+                fill="white",
+            )
+
+            draw.text(
+                (
+                    self.device.width
+                    - textLength
+                    - self.px
+                    + progressTextPaddding,
+                    self.py + gap * 3,
+                ),
+                progressText,
+                anchor="lt",
+            )
 
 
 if __name__ == "__main__":

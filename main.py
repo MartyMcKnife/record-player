@@ -23,6 +23,7 @@ tagUID = ""
 songInfo = {
     "track_name": "",
     "artists": "",
+    "album": "",
     "total_duration": 0,
     "current_duration": 0,
 }
@@ -46,10 +47,13 @@ class handler(BaseHTTPRequestHandler):
             message = "unable to parse auth code. please try again"
         # html framework
         self.send_response(code)
-        self.send_header("Content-type", "text/plain; charset=utf-8")
-        self.send_header("Content-length", str(len(message)))
+        self.send_header("Content-type", "text/html; charset=utf-8")
         self.end_headers()
-        self.wfile.write(bytes(message, "utf-8"))
+        self.wfile.write(
+            b"<html><head><link rel='shortcut icon' href='data:image/x-icon;,' type='image/x-icon'> </head>"
+        )
+        self.wfile.write(bytes(f"<body><p>{message}</p>", encoding="utf-8"))
+        self.wfile.write(bytes("</body></html>", encoding="utf-8"))
 
 
 def setup():
@@ -82,7 +86,6 @@ def main(device: display, nfc: pn532):
     sp = validateUser()
     # oauth logic for spotify
     if not sp:
-
         device.draw_text("Please scan the QR code to login with Spotify!")
         time.sleep(3)
 
@@ -107,7 +110,6 @@ def main(device: display, nfc: pn532):
         # keep qr code on the screen until our resp arrives
         while not authString:
             device.draw_qrcode(url)
-        print(authString)
         # wait 1 second to let success page to send to client
         time.sleep(1)
         # cleanly exit server
@@ -120,21 +122,30 @@ def main(device: display, nfc: pn532):
         # the reality is our user wont fuck it up (famous last words)
         # add it to the list of sean pls fix
         except SpotifyOauthError as e:
-            print("Unexpected error when authenticating, trying again in 5 seconds")
+            device.draw_text(
+                "Unexpected error when authenticating, trying again in 5 seconds",
+            )
+            authString = ""
             print(e)
             time.sleep(5)
     # # Step 2: Check if there is a new NFC tag present
     # success, uid = nfc.readPassiveTargetID(pn532.PN532_MIFARE_ISO14443A_106KBPS)
     success, uid = (True, 123)
-    if success:
+    # check both we have an NFC tag and a spotify instance
+    if success and sp:
         global songInfo
         global tagUID
 
         # Check to see if this is a new tag or a different one
         if uid == tagUID:
-
             # Handle same track
-            print(songInfo)
+            device.draw_songInfo(
+                songInfo["track_name"],
+                songInfo["artists"],
+                songInfo["album"],
+                songInfo["total_duration"],
+                songInfo["current_duration"],
+            )
         else:
             # # Handle different track
             # device_id = os.getenv("DEVICE_ID")
@@ -146,14 +157,21 @@ def main(device: display, nfc: pn532):
             # # we use context uri as we want to play the album not just an individual track
             # sp.start_playback(device_id, context_uri=uri)
             # # tiny delay to ensure current playback will be correct
-            playing = sp.current_playback()
+            time.sleep(1)
+
+            playing = None
+            # keep looping until we have data to play from
+            while not playing:
+                playing = sp.current_playback()
+                time.sleep(0.5)
             songInfo = {
                 "track_name": playing["item"]["name"],
                 "artists": ", ".join(
                     [item["name"] for item in playing["item"]["artists"]]
                 ),
-                "total_duration": playing["item"]["duration_ms"],
-                "current_duration": playing["progress_ms"],
+                "album": playing["item"]["album"]["name"],
+                "total_duration": int(playing["item"]["duration_ms"]),
+                "current_duration": int(playing["progress_ms"]),
             }
             tagUID = uid
     else:
