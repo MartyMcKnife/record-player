@@ -1,12 +1,14 @@
+from dotenv import load_dotenv
 from luma.oled.device import ssd1309, ssd1306
 from luma.core.interface.serial import i2c
 from pn532pi import Pn532, Pn532I2c, pn532
 from lib.lcd_screen import display
+from lib.rfid import readData
 from lib.spotify import validateUser, authUser, getUrl
 from luma.emulator import device
 from spotipy.oauth2 import SpotifyOauthError
 
-
+import os
 import sys
 import time
 from http.server import BaseHTTPRequestHandler
@@ -14,8 +16,16 @@ import socketserver
 import threading
 from urllib.parse import parse_qs, urlparse
 
+load_dotenv()
 
 authString = ""
+tagUID = ""
+songInfo = {
+    "track_name": "",
+    "artists": "",
+    "total_duration": 0,
+    "current_duration": 0,
+}
 
 
 # handler for our http server if user hasn't already authenticated
@@ -37,9 +47,9 @@ class handler(BaseHTTPRequestHandler):
         # html framework
         self.send_response(code)
         self.send_header("Content-type", "text/plain; charset=utf-8")
-        self.send_header("Content-length", str(len("successfully authed!")))
+        self.send_header("Content-length", str(len(message)))
         self.end_headers()
-        self.wfile.write(bytes(message))
+        self.wfile.write(bytes(message, "utf-8"))
 
 
 def setup():
@@ -68,14 +78,18 @@ def setup():
 
 
 def main(device: display, nfc: pn532):
-    # Step 1: Check if we are authenticated Spotify user
+    # Step 1: Check if we are authenticated Spotify user. If not authenticate
     sp = validateUser()
+    # oauth logic for spotify
     if not sp:
-        url = getUrl()
-        # device.draw_text("Please authenticate with Spotify!")
-        # time.sleep(3)
+
+        device.draw_text("Please scan the QR code to login with Spotify!")
+        time.sleep(3)
 
         global authString
+
+        url = getUrl()
+        print(url)
 
         # start the server for receiving the correct code
 
@@ -83,7 +97,7 @@ def main(device: display, nfc: pn532):
         # for some reason even if we exact cleanly, the tcp server won't register the socket as realeased
         # we tell it to shutup and still start the server
         socketserver.TCPServer.allow_reuse_address = True
-        httpd = socketserver.TCPServer(("", 5000), handler)
+        httpd = socketserver.TCPServer(("", 8080), handler)
         x = threading.Thread(
             target=httpd.serve_forever,
             daemon=True,
@@ -100,31 +114,51 @@ def main(device: display, nfc: pn532):
         httpd.server_close()
         httpd.shutdown()
         try:
-            authUser(authString)
+            sp = authUser(authString)
         # in case user tries to brute force or something idk we restart the server and try again
         # probably a less resource intensive way to do this but i have spent like 3 hours doing this and im kinda sick of it
         # the reality is our user wont fuck it up (famous last words)
         # add it to the list of sean pls fix
-        except SpotifyOauthError:
-            print(
-                "Unexpected error when authenticating, trying again in 5 seconds"
-            )
+        except SpotifyOauthError as e:
+            print("Unexpected error when authenticating, trying again in 5 seconds")
+            print(e)
             time.sleep(5)
-
     # # Step 2: Check if there is a new NFC tag present
-    # success, uid = nfc.readPassiveTargetID(
-    #     pn532.PN532_MIFARE_ISO14443A_106KBPS
-    # )
-    # if success:
-    #     # Check to see if this is a new tag or a different one
-    #     if uid == tag_uid:
-    #         # Handle same tra
-    #         print("new uid")
-    #     # else:
-    #     #     # Handle different track
-    # else:
-    #     # No album currently select. Basically just handle life cycle upkeep
-    #     display.no_songs()
+    # success, uid = nfc.readPassiveTargetID(pn532.PN532_MIFARE_ISO14443A_106KBPS)
+    success, uid = (True, 123)
+    if success:
+        global songInfo
+        global tagUID
+
+        # Check to see if this is a new tag or a different one
+        if uid == tagUID:
+
+            # Handle same track
+            print(songInfo)
+        else:
+            # # Handle different track
+            # device_id = os.getenv("DEVICE_ID")
+            # # transfer playing to our device
+            # sp.transfer_playback(device_id, force_play=False)
+            # # get our uri
+            # uri = readData(nfc, uid)
+            # # start playback and update currently playing uri
+            # # we use context uri as we want to play the album not just an individual track
+            # sp.start_playback(device_id, context_uri=uri)
+            # # tiny delay to ensure current playback will be correct
+            playing = sp.current_playback()
+            songInfo = {
+                "track_name": playing["item"]["name"],
+                "artists": ", ".join(
+                    [item["name"] for item in playing["item"]["artists"]]
+                ),
+                "total_duration": playing["item"]["duration_ms"],
+                "current_duration": playing["progress_ms"],
+            }
+            tagUID = uid
+    else:
+        # No album currently select. Basically just handle life cycle upkeep
+        display.no_songs()
 
     # # Step 3: check to see if any buttons have been pushed
     # # TBD
@@ -133,9 +167,6 @@ def main(device: display, nfc: pn532):
 
 
 if __name__ == "__main__":
-    try:
-        device_setup, nfc = setup()
-        while True:
-            main(device_setup, nfc)
-    except KeyboardInterrupt:
-        pass
+    device_setup, nfc = setup()
+    while True:
+        main(device_setup, nfc)

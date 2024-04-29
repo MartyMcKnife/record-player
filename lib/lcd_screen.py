@@ -24,7 +24,7 @@ class display:
     def draw_text(self, text: str, gap: int = 25):
         with canvas(self.device) as draw:
             # break up our text into lines based on the width of the device
-            para = textwrap.wrap(text, width=self.device.width / 4)
+            para = textwrap.wrap(text, width=self.device.width / 6)
 
             # loop through every line
             for i, line in enumerate(para):
