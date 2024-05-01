@@ -4,7 +4,7 @@ from luma.core.interface.serial import i2c
 from pn532pi import Pn532, Pn532I2c, pn532
 from lib.lcd_screen import display
 from lib.rfid import readData
-from lib.spotify import validateUser, authUser, getUrl
+from lib.spotify import getSongInfo, validateUser, authUser, getUrl
 from luma.emulator import device
 from spotipy.oauth2 import SpotifyOauthError
 
@@ -21,9 +21,10 @@ load_dotenv()
 authString = ""
 tagUID = ""
 songInfo = {
-    "track_name": "",
-    "artists": "",
-    "album": "",
+    "song_id": "",
+    "track": {"name": "", "cur": "", "end": ""},
+    "artist": {"name": "", "cur": "", "end": ""},
+    "album": {"name": "", "cur": "", "end": ""},
     "total_duration": 0,
     "current_duration": 0,
 }
@@ -49,6 +50,8 @@ class handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-type", "text/html; charset=utf-8")
         self.end_headers()
+        # we send back a dummy favicon otherwise most browsers will send another request to get the favicon
+        # this causes a race condition and our logic to grab the code collapses on itself
         self.wfile.write(
             b"<html><head><link rel='shortcut icon' href='data:image/x-icon;,' type='image/x-icon'> </head>"
         )
@@ -139,13 +142,12 @@ def main(device: display, nfc: pn532):
         # Check to see if this is a new tag or a different one
         if uid == tagUID:
             # Handle same track
-            device.draw_songInfo(
-                songInfo["track_name"],
-                songInfo["artists"],
-                songInfo["album"],
-                songInfo["total_duration"],
-                songInfo["current_duration"],
-            )
+            print(songInfo)
+
+            # wait half a second before refreshing our spotify status
+            # we do this at the end so as not to waste the request made when the record is initially placed
+            time.sleep(0.5)
+            songInfo = getSongInfo(sp)
         else:
             # # Handle different track
             # device_id = os.getenv("DEVICE_ID")
@@ -158,21 +160,14 @@ def main(device: display, nfc: pn532):
             # sp.start_playback(device_id, context_uri=uri)
             # # tiny delay to ensure current playback will be correct
             time.sleep(1)
-
-            playing = None
-            # keep looping until we have data to play from
-            while not playing:
-                playing = sp.current_playback()
-                time.sleep(0.5)
-            songInfo = {
-                "track_name": playing["item"]["name"],
-                "artists": ", ".join(
-                    [item["name"] for item in playing["item"]["artists"]]
-                ),
-                "album": playing["item"]["album"]["name"],
-                "total_duration": int(playing["item"]["duration_ms"]),
-                "current_duration": int(playing["progress_ms"]),
-            }
+            songDetails = getSongInfo(sp)
+            track_overflow = device.get_text_overflow(songDetails["track"]["name"])
+            artist_overflow = device.get_text_overflow(songDetails["artists"]["name"])
+            album_overflow = device.get_text_overflow(songDetails["album"]["name"])
+            songDetails["track"]["end"] = track_overflow
+            songDetails["artists"]["end"] = artist_overflow
+            songDetails["album"]["end"] = album_overflow
+            songInfo.update(songDetails)
             tagUID = uid
     else:
         # No album currently select. Basically just handle life cycle upkeep

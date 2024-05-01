@@ -16,7 +16,7 @@ ImageDraw.ImageDraw.font = ImageFont.truetype(
 
 
 class display:
-    def __init__(self, device: ssd1309, px=8, py=4):
+    def __init__(self, device: ssd1309, px=8, py=8):
         self.device = device
         self.px = px
         self.py = py
@@ -82,6 +82,54 @@ class display:
                 "No music currently playing!",
             )
 
+    def get_text_overflow(self, text: str):
+        with canvas(self.device) as draw:
+            textLength = draw.textlength(text)
+            # get the pixel width that overflows
+            textOverflowWidth = textLength - (self.device.width - (self.px * 2))
+            # if we don't overflow, don't return any overflowed text
+            if textOverflowWidth <= 0:
+                return ""
+            # reverse the list to get the text that overflows
+            splitTextRev = list(text)[::-1]
+
+            charlist = []
+            i = 0
+            # loop through every character (and its predecessor) and check to see if it is the length of the overflow
+            while draw.textlength("".join(charlist)) < textOverflowWidth:
+                charlist.append(splitTextRev[i])
+                i += 1
+            # return the chopped off text
+            return "".join(charlist)[::-1]
+
+    def draw_song_text(self, draw, text: str, number: int, gap: int):
+        # if it is gonna be wider than our screen width with padding, we left align it so the scroll looks cleaner
+        # otherwise it is middle aligned
+        textLength = draw.textlength(text)
+        if textLength > self.device.width - (self.px * 2):
+            draw.text((self.px, self.py + (gap * (number - 1))), text, anchor="lm")
+            # if we are overflowing, we want there to still be some padding on the right left so it looks clean
+            # draw a black rectangle over the top to make this work
+            # we make this rectangle span the full height because I am lazy and this it is more efficient than dynamically finding the text height
+            draw.rectangle(
+                (
+                    self.device.width - self.py,
+                    0,
+                    self.device.width,
+                    self.device.height,
+                ),
+                fill="black",
+            )
+        else:
+            draw.text(
+                (
+                    (self.device.width - self.px / 2) / 2,
+                    self.py + (gap * (number - 1)),
+                ),
+                text,
+                anchor="mm",
+            )
+
     def draw_songInfo(
         self,
         songName: str,
@@ -89,99 +137,64 @@ class display:
         songAlbum: str,
         totalDuration: int,
         currentDuration: int,
-        gap: int = 15,
+        gap: int = 14,
     ):
-        start_time = 0
-
-        # create callback function to increase time
-        def increase_time(current_time: int):
-            return start_time + current_time
 
         with canvas(self.device) as draw:
             # draw each info point on our screen
-            # if it is gonna be wider than our screen width with padding, we left align it so the scroll looks cleaner
-            # otherwise it is middle aligned
-            line1length = draw.textlength(songName)
-            draw.text(
-                (self.px, self.py),
-                songName,
-                anchor=(
-                    "mm"
-                    if line1length > self.device.width - (self.px * 2)
-                    else "lm"
-                ),
-            )
 
-            line2length = draw.textlength(songArtist)
-            draw.text(
-                (self.px, self.py + gap),
-                songArtist,
-                anchor=(
-                    "mm"
-                    if line2length > self.device.width - (self.px * 2)
-                    else "lm"
-                ),
-            )
-
-            line3length = draw.textlength(songAlbum)
-            draw.text(
-                (self.px, self.py + gap * 2),
-                songAlbum,
-                anchor=(
-                    "mm"
-                    if line3length > self.device.width - (self.px * 2)
-                    else "lm"
-                ),
-            )
+            self.draw_song_text(draw, songName, 1, gap)
+            self.draw_song_text(draw, songArtist, 2, gap)
+            self.draw_song_text(draw, songAlbum, 3, gap)
 
             # draw our progress bar
-            # take off the progress time at the end
+            # calculate the needed space for the progress time at the end
             progressText = f"{self.millisecond_convert(currentDuration)} / {self.millisecond_convert(totalDuration)}"
-            progressTextPaddding = 4
-            textLength = draw.textlength(progressText)
+            progressTextPaddding = 2
+            textLength = draw.textlength(progressText, font_size=8)
             progressLength = textLength + self.px + progressTextPaddding
 
             # draw rectangle outline
             draw.rectangle(
                 (
                     self.px,
-                    self.py + gap * 3,
+                    self.py + (gap * 3),
                     self.device.width - progressLength,
-                    self.py + gap * 3 + 10,
+                    self.py + (gap * 3) + 5,
                 ),
                 outline="white",
             )
-            print(currentDuration / totalDuration)
             # draw rectangle fill
             # fill is calculated as a percentage of full length, based on the current / rem duration
             draw.rectangle(
                 (
                     self.px,
-                    self.py + gap * 3,
-                    self.px
-                    + (
+                    self.py + (gap * 3),
+                    (
                         (currentDuration / totalDuration)
                         * (self.device.width - progressLength)
                     ),
-                    self.py + gap * 3 + 10,
+                    self.py + (gap * 3) + 5,
                 ),
                 fill="white",
             )
 
             draw.text(
                 (
-                    self.device.width
-                    - textLength
-                    - self.px
-                    + progressTextPaddding,
-                    self.py + gap * 3,
+                    self.device.width - textLength - self.px + progressTextPaddding,
+                    self.py + (gap * 3),
                 ),
                 progressText,
+                font_size=8,
                 anchor="lt",
             )
 
 
 if __name__ == "__main__":
     device = d.pygame()
-    display(device).draw_qrcode("https://www.google.com")
+    print(
+        display(device).draw_song_text(
+            text="This is a really really really long string", number=1, gap=0
+        )
+    )
     time.sleep(10)
