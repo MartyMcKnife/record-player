@@ -240,13 +240,13 @@ def main(device: display, nfc: pn532):
             motorProcess.kill()
 
     # Step 3: check to see if any buttons have been pushed. If they have, handle corresponding
-    global setup_buttons
-    if sp and setup_buttons:
-        buttonStart.when_deactivated = togglePlayback(
-            sp=sp, songInfo=songInfo
-        )
-        buttonSkip.when_deactivated = skipPlayback(sp=sp)
-        setup_buttons = True
+    # global setup_buttons
+    # if sp and setup_buttons:
+    #     buttonStart.when_deactivated = togglePlayback(
+    #         sp=sp, songInfo=songInfo
+    #     )
+    #     buttonSkip.when_deactivated = skipPlayback(sp=sp)
+    #     setup_buttons = True
 
 
 if __name__ == "__main__":
