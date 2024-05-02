@@ -1,8 +1,7 @@
 from dotenv import load_dotenv
-from luma.oled.device import ssd1309, ssd1306
+from luma.oled.device import ssd1309
 from luma.core.interface.serial import i2c
 from pn532pi import Pn532, Pn532I2c, pn532
-from luma.emulator import device
 from spotipy.oauth2 import SpotifyOauthError
 from gpiozero import Button
 
@@ -77,8 +76,8 @@ class handler(BaseHTTPRequestHandler):
 def setup():
     # Instantiate OLED device
     try:
-        # serial = i2c(port=1, address=0x3C)
-        # device = ssd1306(serial)
+        serial = i2c(port=1, address=0x3C)
+        device = ssd1309(serial)
         device_base = device.pygame()
         device_constr = display(device_base)
     except IOError:
@@ -87,13 +86,13 @@ def setup():
         )
 
     # # Instantiate NFC
-    # try:
-    #     PN532_I2C = Pn532I2c(1)
-    #     nfc = Pn532(PN532_I2C)
-    #     nfc.begin()
-    #     nfc.SAMConfig()
-    # except IOError:
-    #     sys.exit("NFC Reader could not be found!")
+    try:
+        PN532_I2C = Pn532I2c(1)
+        nfc = Pn532(PN532_I2C)
+        nfc.begin()
+        nfc.SAMConfig()
+    except IOError:
+        sys.exit("NFC Reader could not be found!")
     nfc = 1
 
     return device_constr, nfc
@@ -147,8 +146,9 @@ def main(device: display, nfc: pn532):
             print(e)
             time.sleep(5)
     # # Step 2: Check if there is a new NFC tag present
-    # success, uid = nfc.readPassiveTargetID(pn532.PN532_MIFARE_ISO14443A_106KBPS)
-    success, uid = (True, 123)
+    success, uid = nfc.readPassiveTargetID(
+        pn532.PN532_MIFARE_ISO14443A_106KBPS
+    )
     # check both we have an NFC tag and a spotify instance
     motorProcess = None
     if success and sp:
@@ -205,10 +205,10 @@ def main(device: display, nfc: pn532):
         else:
             # Handle different track
             device_id = os.getenv("DEVICE_ID")
-            # transfer playing to our device
-            sp.transfer_playback(device_id, force_play=False)
             # get our uri
             uri = readData(nfc, uid)
+            # transfer playing to our device
+            sp.transfer_playback(device_id, force_play=False)
             # start playback and update currently playing uri
             # we use context uri as we want to play the album not just an individual track
             sp.start_playback(device_id, context_uri=uri)
