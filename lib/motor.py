@@ -1,4 +1,4 @@
-import RpiMotorLib
+from RpiMotorLib import RpiMotorLib
 
 motor = RpiMotorLib.BYJMotor("1", "28BYJ")
 
