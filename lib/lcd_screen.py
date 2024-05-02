@@ -84,9 +84,10 @@ class display:
 
     def get_text_overflow(self, text: str):
         with canvas(self.device) as draw:
+            width = self.device.width - (self.px * 2)
             textLength = draw.textlength(text)
             # get the pixel width that overflows
-            textOverflowWidth = textLength - (self.device.width - (self.px * 2))
+            textOverflowWidth = textLength - (width)
             # if we don't overflow, don't return any overflowed text
             if textOverflowWidth <= 0:
                 return ""
@@ -96,7 +97,7 @@ class display:
             charlist = []
             i = 0
             # loop through every character (and its predecessor) and check to see if it is the length of the overflow
-            while draw.textlength("".join(charlist)) < textOverflowWidth:
+            while draw.textlength("".join(charlist)) < (width):
                 charlist.append(splitTextRev[i])
                 i += 1
             # return the chopped off text
@@ -107,7 +108,9 @@ class display:
         # otherwise it is middle aligned
         textLength = draw.textlength(text)
         if textLength > self.device.width - (self.px * 2):
-            draw.text((self.px, self.py + (gap * (number - 1))), text, anchor="lm")
+            draw.text(
+                (self.px, self.py + (gap * (number - 1))), text, anchor="lm"
+            )
             # if we are overflowing, we want there to still be some padding on the right left so it looks clean
             # draw a black rectangle over the top to make this work
             # we make this rectangle span the full height because I am lazy and this it is more efficient than dynamically finding the text height
@@ -139,7 +142,6 @@ class display:
         currentDuration: int,
         gap: int = 14,
     ):
-
         with canvas(self.device) as draw:
             # draw each info point on our screen
 
@@ -166,12 +168,17 @@ class display:
             )
             # draw rectangle fill
             # fill is calculated as a percentage of full length, based on the current / rem duration
+            print(
+                (currentDuration / totalDuration)
+                * (self.device.width - progressLength)
+            )
             draw.rectangle(
                 (
                     self.px,
                     self.py + (gap * 3),
                     (
-                        (currentDuration / totalDuration)
+                        self.px
+                        + (currentDuration / totalDuration)
                         * (self.device.width - progressLength)
                     ),
                     self.py + (gap * 3) + 5,
@@ -181,7 +188,10 @@ class display:
 
             draw.text(
                 (
-                    self.device.width - textLength - self.px + progressTextPaddding,
+                    self.device.width
+                    - textLength
+                    - self.px
+                    + progressTextPaddding,
                     self.py + (gap * 3),
                 ),
                 progressText,

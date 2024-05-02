@@ -2,11 +2,22 @@ from dotenv import load_dotenv
 from luma.oled.device import ssd1309, ssd1306
 from luma.core.interface.serial import i2c
 from pn532pi import Pn532, Pn532I2c, pn532
-from lib.lcd_screen import display
-from lib.rfid import readData
-from lib.spotify import getSongInfo, validateUser, authUser, getUrl
 from luma.emulator import device
 from spotipy.oauth2 import SpotifyOauthError
+from gpiozero import Button
+
+from lib.lcd_screen import display
+from lib.rfid import readData
+from lib.spotify import (
+    getSongInfo,
+    validateUser,
+    authUser,
+    getUrl,
+    skipPlayback,
+    togglePlayback,
+)
+from lib.util import checkReverse, shiftList
+from lib.motor import drive_motor
 
 import os
 import sys
@@ -14,6 +25,7 @@ import time
 from http.server import BaseHTTPRequestHandler
 import socketserver
 import threading
+from multiprocessing import Process
 from urllib.parse import parse_qs, urlparse
 
 load_dotenv()
@@ -22,12 +34,15 @@ authString = ""
 tagUID = ""
 songInfo = {
     "song_id": "",
-    "track": {"name": "", "cur": "", "end": ""},
-    "artist": {"name": "", "cur": "", "end": ""},
-    "album": {"name": "", "cur": "", "end": ""},
+    "track": {"name": "", "cur": "", "end": "", "reverse": False},
+    "artist": {"name": "", "cur": "", "end": "", "reverse": False},
+    "album": {"name": "", "cur": "", "end": "", "reverse": False},
     "total_duration": 0,
     "current_duration": 0,
 }
+
+buttonStart = Button(7)
+buttonSkip = Button(11)
 
 
 # handler for our http server if user hasn't already authenticated
@@ -135,51 +150,123 @@ def main(device: display, nfc: pn532):
     # success, uid = nfc.readPassiveTargetID(pn532.PN532_MIFARE_ISO14443A_106KBPS)
     success, uid = (True, 123)
     # check both we have an NFC tag and a spotify instance
+    motorProcess = None
     if success and sp:
         global songInfo
         global tagUID
+        motorProcess = None
 
         # Check to see if this is a new tag or a different one
         if uid == tagUID:
             # Handle same track
+            track_data = songInfo["track"]
+            artist_data = songInfo["artist"]
+            album_data = songInfo["album"]
+
+            track_data["reverse"] = checkReverse(track_data)
+            artist_data["reverse"] = checkReverse(artist_data)
+            album_data["reverse"] = checkReverse(album_data)
             print(songInfo)
+            device.draw_songInfo(
+                track_data["cur"],
+                artist_data["cur"],
+                album_data["cur"],
+                songInfo["total_duration"],
+                songInfo["current_duration"],
+            )
 
             # wait half a second before refreshing our spotify status
             # we do this at the end so as not to waste the request made when the record is initially placed
             time.sleep(0.5)
-            songInfo = getSongInfo(sp)
+            # update song info
+            newSongInfo = getSongInfo(
+                sp,
+                cur_id=songInfo["song_id"],
+                ends={
+                    "track": songInfo["track"]["end"],
+                    "artist": songInfo["artist"]["end"],
+                    "album": songInfo["album"]["end"],
+                },
+                device=device,
+            )
+            # check if track is different
+            # if it is shift our text
+            # otherwise just update the object
+            if newSongInfo["song_id"] == songInfo["song_id"]:
+                songInfo["track"]["cur"] = shiftList(track_data)
+                songInfo["artist"]["cur"] = shiftList(artist_data)
+                songInfo["album"]["cur"] = shiftList(album_data)
+                songInfo["current_duration"] = newSongInfo["current_duration"]
+                songInfo["total_duration"] = newSongInfo["total_duration"]
+
+            else:
+                songInfo = newSongInfo
+
         else:
-            # # Handle different track
-            # device_id = os.getenv("DEVICE_ID")
-            # # transfer playing to our device
-            # sp.transfer_playback(device_id, force_play=False)
-            # # get our uri
-            # uri = readData(nfc, uid)
-            # # start playback and update currently playing uri
-            # # we use context uri as we want to play the album not just an individual track
-            # sp.start_playback(device_id, context_uri=uri)
-            # # tiny delay to ensure current playback will be correct
+            # Handle different track
+            device_id = os.getenv("DEVICE_ID")
+            # transfer playing to our device
+            sp.transfer_playback(device_id, force_play=False)
+            # get our uri
+            uri = readData(nfc, uid)
+            # start playback and update currently playing uri
+            # we use context uri as we want to play the album not just an individual track
+            sp.start_playback(device_id, context_uri=uri)
+            # create a new motorprocess
+            # this will be used to ensure that driving the motor doesn't block the loop
+            motorProcess = Process(target=drive_motor)
+            motorProcess.start()
+            # tiny delay to ensure current playback will be correct
             time.sleep(1)
-            songDetails = getSongInfo(sp)
-            track_overflow = device.get_text_overflow(songDetails["track"]["name"])
-            artist_overflow = device.get_text_overflow(songDetails["artists"]["name"])
-            album_overflow = device.get_text_overflow(songDetails["album"]["name"])
-            songDetails["track"]["end"] = track_overflow
-            songDetails["artists"]["end"] = artist_overflow
-            songDetails["album"]["end"] = album_overflow
-            songInfo.update(songDetails)
+            songDetails = getSongInfo(sp, device=device)
+            songInfo = songDetails
             tagUID = uid
     else:
         # No album currently select. Basically just handle life cycle upkeep
         display.no_songs()
+        # clear the songInfo object so nothing else that uses it for checking stuffs up
+        songInfo = {
+            "song_id": "",
+            "track": {"name": "", "cur": "", "end": "", "reverse": False},
+            "artist": {"name": "", "cur": "", "end": "", "reverse": False},
+            "album": {"name": "", "cur": "", "end": "", "reverse": False},
+            "total_duration": 0,
+            "current_duration": 0,
+        }
+        sp.pause_playback()
+        # if we are driving the motor, kill it
+        if motorProcess:
+            motorProcess.join()
+            motorProcess.kill()
 
-    # # Step 3: check to see if any buttons have been pushed
-    # # TBD
+    # Step 3: check to see if any buttons have been pushed. If they have, handle corresponding
 
-    # # Step 4: Rotate stepper if we are playing
+    if sp:
+        buttonStart.when_deactivated = togglePlayback(
+            sp=sp, songInfo=songInfo
+        )
+        buttonSkip.when_deactivated = skipPlayback(sp=sp)
 
 
 if __name__ == "__main__":
     device_setup, nfc = setup()
+    consec_errors = 0
     while True:
-        main(device_setup, nfc)
+        try:
+            main(device_setup, nfc)
+            # reset our consecutive errors if we run through the main loop aok
+            consec_errors = 0
+        # if something stuffs up in the loop, try and recover from it
+        except Exception as e:
+            device_setup.draw_text(
+                "Something went wrong, seeing if we can restart"
+            )
+            consec_errors += 1
+            print(e)
+            # we've crashed too many times. give up :(
+            if consec_errors > 3:
+                while True:
+                    device_setup.draw_text(
+                        "Please check log and restart device"
+                    )
+            time.sleep(2)
