@@ -11,9 +11,9 @@ import os
 import textwrap
 import datetime
 
-ImageDraw.ImageDraw.font = ImageFont.truetype(
-    os.path.dirname(__file__) + "/fonts/NotoSans-Medium.ttf"
-)
+# ImageDraw.ImageDraw.font = ImageFont.truetype(
+#     os.path.dirname(__file__) + "/fonts/NotoSans-Medium.ttf"
+# )
 
 
 class display:
