@@ -93,7 +93,6 @@ def setup():
         nfc.SAMConfig()
     except IOError:
         sys.exit("NFC Reader could not be found!")
-    nfc = 1
 
     return device_constr, nfc
 
