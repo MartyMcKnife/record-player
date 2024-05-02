@@ -1,6 +1,7 @@
 from luma.core.render import canvas
-from luma.oled.device import ssd1309
-from luma.emulator import device as d
+from luma.oled.device import ssd1309, ssd1306
+from luma.core.interface.serial import i2c
+
 from PIL import Image, ImageFont, ImageDraw
 
 import time
@@ -16,7 +17,7 @@ ImageDraw.ImageDraw.font = ImageFont.truetype(
 
 
 class display:
-    def __init__(self, device: ssd1309, px=8, py=8):
+    def __init__(self, device: ssd1306, px=8, py=8):
         self.device = device
         self.px = px
         self.py = py
@@ -201,10 +202,9 @@ class display:
 
 
 if __name__ == "__main__":
-    device = d.pygame()
-    print(
-        display(device).draw_song_text(
-            text="This is a really really really long string", number=1, gap=0
-        )
-    )
+    serial = i2c(port=1, address=0x3C)
+    device = ssd1306(serial)
+    while True:
+        display(device).no_songs()
+
     time.sleep(10)

@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from luma.oled.device import ssd1309
+from luma.oled.device import ssd1306
 from luma.core.interface.serial import i2c
 from pn532pi import Pn532, Pn532I2c, pn532
 from spotipy.oauth2 import SpotifyOauthError
@@ -77,8 +77,7 @@ def setup():
     # Instantiate OLED device
     try:
         serial = i2c(port=1, address=0x3C)
-        device = ssd1309(serial)
-        device_base = device.pygame()
+        device_base = ssd1306(serial)
         device_constr = display(device_base)
     except IOError:
         sys.exit(
