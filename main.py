@@ -40,8 +40,8 @@ songInfo = {
     "current_duration": 0,
 }
 
-buttonStart = Button(7)
-buttonSkip = Button(11)
+# buttonStart = Button(7)
+# buttonSkip = Button(11)
 setup_buttons = True
 
 
