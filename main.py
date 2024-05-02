@@ -42,6 +42,7 @@ songInfo = {
 
 buttonStart = Button(7)
 buttonSkip = Button(11)
+setup_buttons = True
 
 
 # handler for our http server if user hasn't already authenticated
@@ -239,12 +240,13 @@ def main(device: display, nfc: pn532):
             motorProcess.kill()
 
     # Step 3: check to see if any buttons have been pushed. If they have, handle corresponding
-
-    if sp:
+    global setup_buttons
+    if sp and setup_buttons:
         buttonStart.when_deactivated = togglePlayback(
             sp=sp, songInfo=songInfo
         )
         buttonSkip.when_deactivated = skipPlayback(sp=sp)
+        setup_buttons = True
 
 
 if __name__ == "__main__":
