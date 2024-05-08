@@ -90,6 +90,7 @@ def setup():
         PN532_I2C = Pn532I2c(1)
         nfc = Pn532(PN532_I2C)
         nfc.begin()
+        time.sleep(0.1)
         nfc.SAMConfig()
     except IOError:
         sys.exit("NFC Reader could not be found!")
