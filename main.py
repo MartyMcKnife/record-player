@@ -223,6 +223,9 @@ def main(device: display, nfc: pn532):
     else:
         # No album currently select. Basically just handle life cycle upkeep
         device.no_songs()
+        # only pause playback if we were already playing a song
+        if songInfo["song_id"]:
+            sp.pause_playback()
         # clear the songInfo object so nothing else that uses it for checking stuffs up
         songInfo = {
             "song_id": "",
@@ -232,7 +235,7 @@ def main(device: display, nfc: pn532):
             "total_duration": 0,
             "current_duration": 0,
         }
-        sp.pause_playback()
+
         # if we are driving the motor, kill it
         if motorProcess:
             motorProcess.join()

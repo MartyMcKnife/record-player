@@ -79,7 +79,7 @@ class display:
         with canvas(self.device) as draw:
             x_length = draw.textlength("No music currently playing!")
             draw.text(
-                ((device.width - x_length) / 2, self.py),
+                ((self.device.width - x_length) / 2, self.py),
                 "No music currently playing!",
             )
 
