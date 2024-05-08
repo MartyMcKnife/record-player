@@ -222,7 +222,7 @@ def main(device: display, nfc: pn532):
             tagUID = uid
     else:
         # No album currently select. Basically just handle life cycle upkeep
-        display.no_songs()
+        device.no_songs()
         # clear the songInfo object so nothing else that uses it for checking stuffs up
         songInfo = {
             "song_id": "",
