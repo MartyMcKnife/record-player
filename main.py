@@ -252,21 +252,21 @@ if __name__ == "__main__":
     device_setup, nfc = setup()
     consec_errors = 0
     while True:
-        try:
-            main(device_setup, nfc)
-            # reset our consecutive errors if we run through the main loop aok
-            consec_errors = 0
-        # if something stuffs up in the loop, try and recover from it
-        except Exception as e:
-            device_setup.draw_text(
-                "Something went wrong, seeing if we can restart"
-            )
-            consec_errors += 1
-            print(e)
-            # we've crashed too many times. give up :(
-            if consec_errors > 3:
-                while True:
-                    device_setup.draw_text(
-                        "Please check log and restart device"
-                    )
-            time.sleep(2)
+        # try:
+        main(device_setup, nfc)
+        # reset our consecutive errors if we run through the main loop aok
+        consec_errors = 0
+    # if something stuffs up in the loop, try and recover from it
+    # except Exception as e:
+    #     device_setup.draw_text(
+    #         "Something went wrong, seeing if we can restart"
+    #     )
+    #     consec_errors += 1
+    #     print(e)
+    #     # we've crashed too many times. give up :(
+    #     if consec_errors > 3:
+    #         while True:
+    #             device_setup.draw_text(
+    #                 "Please check log and restart device"
+    #             )
+    #     time.sleep(2)
