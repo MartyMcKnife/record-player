@@ -11,9 +11,9 @@ import os
 import textwrap
 import datetime
 
-# ImageDraw.ImageDraw.font = ImageFont.truetype(
-#     os.path.dirname(__file__) + "/fonts/NotoSans-Medium.ttf"
-# )
+ImageDraw.ImageDraw.font = ImageFont.truetype(
+    os.path.dirname(__file__) + "/fonts/NotoSans-Medium.ttf"
+)
 
 
 class display:
@@ -47,6 +47,7 @@ class display:
                         (self.device.height - h + (gap * (i - 1))) / 2,
                     ),
                     line,
+                    fill="white",
                 )
 
     def draw_qrcode(self, link: str):
@@ -81,6 +82,7 @@ class display:
             draw.text(
                 ((self.device.width - x_length) / 2, self.py),
                 "No music currently playing!",
+                fill="white",
             )
 
     def get_text_overflow(self, text: str):
@@ -110,7 +112,10 @@ class display:
         textLength = draw.textlength(text)
         if textLength > self.device.width - (self.px * 2):
             draw.text(
-                (self.px, self.py + (gap * (number - 1))), text, anchor="lm"
+                (self.px, self.py + (gap * (number - 1))),
+                text,
+                anchor="lm",
+                fill="white",
             )
             # if we are overflowing, we want there to still be some padding on the right left so it looks clean
             # draw a black rectangle over the top to make this work
@@ -132,6 +137,7 @@ class display:
                 ),
                 text,
                 anchor="mm",
+                fill="white",
             )
 
     def draw_songInfo(
@@ -198,6 +204,7 @@ class display:
                 progressText,
                 font_size=8,
                 anchor="lt",
+                fill="white",
             )
 
 
