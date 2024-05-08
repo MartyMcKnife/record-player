@@ -77,13 +77,7 @@ class display:
         self.device.display(screen)
 
     def no_songs(self):
-        with canvas(self.device) as draw:
-            x_length = draw.textlength("No music currently playing!")
-            draw.text(
-                ((self.device.width - x_length) / 2, self.py),
-                "No music currently playing!",
-                fill="white",
-            )
+        self.draw_text("No music current playing!")
 
     def get_text_overflow(self, text: str):
         with canvas(self.device) as draw:
