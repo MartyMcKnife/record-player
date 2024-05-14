@@ -40,8 +40,8 @@ songInfo = {
     "current_duration": 0,
 }
 try:
-    buttonStart = Button(7)
-    buttonSkip = Button(11)
+    buttonStart = Button(4)
+    buttonSkip = Button(17)
     setup_buttons = True
 except GPIOPinInUse as e:
     print(e)
