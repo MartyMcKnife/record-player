@@ -40,8 +40,8 @@ songInfo = {
     "current_duration": 0,
 }
 
-# buttonStart = Button(7)
-# buttonSkip = Button(11)
+buttonStart = Button(7)
+buttonSkip = Button(11)
 setup_buttons = True
 
 
@@ -90,7 +90,7 @@ def setup():
         PN532_I2C = Pn532I2c(1)
         nfc = Pn532(PN532_I2C)
         nfc.begin()
-        time.sleep(0.1)
+        time.sleep(1)
         nfc.SAMConfig()
     except IOError:
         sys.exit("NFC Reader could not be found!")
@@ -243,13 +243,13 @@ def main(device: display, nfc: pn532):
             motorProcess.kill()
 
     # Step 3: check to see if any buttons have been pushed. If they have, handle corresponding
-    # global setup_buttons
-    # if sp and setup_buttons:
-    #     buttonStart.when_deactivated = togglePlayback(
-    #         sp=sp, songInfo=songInfo
-    #     )
-    #     buttonSkip.when_deactivated = skipPlayback(sp=sp)
-    #     setup_buttons = True
+    global setup_buttons
+    if sp and setup_buttons:
+        buttonStart.when_deactivated = togglePlayback(
+            sp=sp, songInfo=songInfo
+        )
+        buttonSkip.when_deactivated = skipPlayback(sp=sp)
+        setup_buttons = True
 
 
 if __name__ == "__main__":
