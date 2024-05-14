@@ -3,7 +3,7 @@ from luma.oled.device import ssd1306
 from luma.core.interface.serial import i2c
 from pn532pi import Pn532, Pn532I2c, pn532
 from spotipy.oauth2 import SpotifyOauthError
-from gpiozero import Button
+from gpiozero import Button, GPIOPinInUse
 
 from lib.lcd_screen import display
 from lib.rfid import readData
@@ -39,10 +39,13 @@ songInfo = {
     "total_duration": 0,
     "current_duration": 0,
 }
-
-buttonStart = Button(7)
-buttonSkip = Button(11)
-setup_buttons = True
+try:
+    buttonStart = Button(7)
+    buttonSkip = Button(11)
+    setup_buttons = True
+except GPIOPinInUse as e:
+    print(e)
+    print("Button Pin already in use")
 
 
 # handler for our http server if user hasn't already authenticated
