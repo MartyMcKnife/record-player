@@ -62,7 +62,7 @@ def togglePlayback(sp=None, songInfo=None, device=None, motorProcess=None):
         else:
             try:
                 print("pausing playback")
-                sp.pause_playback(device_id=device)
+                sp.pause_playback(device_id=os.getenv("DEVICE_ID"))
                 device.draw_text("Paused")
                 if motorProcess:
                     motorProcess.join()

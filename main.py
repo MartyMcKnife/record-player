@@ -259,9 +259,7 @@ def main(device: display, nfc: pn532):
         def button_playback():
             print("pausing")
             global songInfo
-            songInfo = togglePlayback(
-                sp=sp, songInfo=songInfo, device=os.getenv("DEVICE_ID")
-            )
+            songInfo = togglePlayback(sp=sp, songInfo=songInfo, device=device)
 
         def button_skip():
             print("skipping")
