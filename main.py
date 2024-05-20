@@ -253,11 +253,21 @@ def main(device: display, nfc: pn532):
 
     # Step 3: check to see if any buttons have been pushed. If they have, handle corresponding
     global setup_buttons
-    if sp:
-        if buttonStart.is_pressed:
-            togglePlayback(sp=sp, songInfo=songInfo)
-        if buttonSkip.is_pressed:
+    if sp and setup_buttons:
+
+        def button_playback():
+            print("pausing")
+            togglePlayback(
+                sp=sp, songInfo=songInfo, device=os.getenv("DEVICE_ID")
+            )
+
+        def button_skip():
+            print("skipping")
             skipPlayback(sp=sp)
+
+        buttonStart.when_pressed = button_playback
+        buttonSkip.when_pressed = skipPlayback
+        setup_buttons = False
 
 
 if __name__ == "__main__":
