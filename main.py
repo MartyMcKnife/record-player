@@ -223,7 +223,7 @@ def main(device: display, nfc: pn532):
             # this will be used to ensure that driving the motor doesn't block the loop
             print("spinning motors")
             motorProcess = Process(target=drive_motor)
-            motorProcess.start()
+            # motorProcess.start()
             # tiny delay to ensure current playback will be correct
             time.sleep(1)
             print("getting song dets")
@@ -253,12 +253,11 @@ def main(device: display, nfc: pn532):
 
     # Step 3: check to see if any buttons have been pushed. If they have, handle corresponding
     global setup_buttons
-    if sp and setup_buttons:
-        buttonStart.when_deactivated = togglePlayback(
-            sp=sp, songInfo=songInfo
-        )
-        buttonSkip.when_deactivated = skipPlayback(sp=sp)
-        setup_buttons = True
+    if sp:
+        if buttonStart.is_pressed:
+            togglePlayback(sp=sp, songInfo=songInfo)
+        if buttonSkip.is_pressed:
+            skipPlayback(sp=sp)
 
 
 if __name__ == "__main__":
