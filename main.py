@@ -89,14 +89,14 @@ def setup():
         )
 
     # # Instantiate NFC
-    try:
-        PN532_I2C = Pn532I2c(1)
-        nfc = Pn532(PN532_I2C)
-        nfc.begin()
-        time.sleep(1)
-        nfc.SAMConfig()
-    except IOError:
-        sys.exit("NFC Reader could not be found!")
+    # try:
+    #     PN532_I2C = Pn532I2c(1)
+    #     nfc = Pn532(PN532_I2C)
+    #     nfc.begin()
+    #     time.sleep(1)
+    #     nfc.SAMConfig()
+    # except IOError:
+    #     sys.exit("NFC Reader could not be found!")
 
     return device_constr, nfc
 
@@ -149,9 +149,10 @@ def main(device: display, nfc: pn532):
             print(e)
             time.sleep(5)
     # # Step 2: Check if there is a new NFC tag present
-    success, uid = nfc.readPassiveTargetID(
-        pn532.PN532_MIFARE_ISO14443A_106KBPS
-    )
+    # success, uid = nfc.readPassiveTargetID(
+    #     pn532.PN532_MIFARE_ISO14443A_106KBPS
+    # )
+    success, uid = (True, 123)
     # check both we have an NFC tag and a spotify instance
     motorProcess = None
     if success and sp:
@@ -209,7 +210,8 @@ def main(device: display, nfc: pn532):
             # Handle different track
             device_id = os.getenv("DEVICE_ID")
             # get our uri
-            uri = readData(nfc, uid)
+            # uri = readData(nfc, uid)
+            uri = "spotify:album:6iHAKqapZLwgw9yIrVgsUT"
             # transfer playing to our device
             sp.transfer_playback(device_id, force_play=False)
             # start playback and update currently playing uri
