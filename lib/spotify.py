@@ -53,12 +53,14 @@ def authUser(returnUrl: str):
 def togglePlayback(sp=None, songInfo=None, device=None, motorProcess=None):
     if sp and songInfo:
         if songInfo["song_id"]:
+            print("resuming playback")
             sp.start_playback(device_id=os.getenv("DEVICE_ID"))
             # playing has resumed, so we resume the motor
             if motorProcess:
                 motorProcess.start()
         else:
             try:
+                print("pausing playback")
                 sp.pause_playback(device_id=device)
                 device.draw_text("Paused")
                 if motorProcess:

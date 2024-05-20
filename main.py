@@ -266,7 +266,7 @@ def main(device: display, nfc: pn532):
             skipPlayback(sp=sp)
 
         buttonStart.when_pressed = button_playback
-        buttonSkip.when_pressed = skipPlayback
+        buttonSkip.when_pressed = button_skip
         setup_buttons = False
 
 
