@@ -73,6 +73,7 @@ def togglePlayback(sp=None, songInfo=None, device=None, motorProcess=None):
             except Exception as e:
                 print(e)
                 return
+    return songInfo
 
 
 def skipPlayback(sp=None):
