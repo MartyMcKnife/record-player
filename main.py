@@ -40,6 +40,10 @@ songInfo = {
     "current_duration": 0,
     "paused": True,
 }
+
+motorProcess = Process(target=drive_motor)
+
+
 try:
     buttonStart = Button(4)
     buttonSkip = Button(17)
@@ -155,11 +159,9 @@ def main(device: display, nfc: pn532):
     # )
     success, uid = (True, 123)
     # check both we have an NFC tag and a spotify instance
-    motorProcess = None
     if success and sp:
         global songInfo
         global tagUID
-        motorProcess = None
 
         # Check to see if this is a new tag or a different one
         if uid == tagUID:
@@ -223,8 +225,7 @@ def main(device: display, nfc: pn532):
             # create a new motorprocess
             # this will be used to ensure that driving the motor doesn't block the loop
             print("spinning motors")
-            motorProcess = Process(target=drive_motor)
-            # motorProcess.start()
+            motorProcess.start()
             # tiny delay to ensure current playback will be correct
             time.sleep(1)
             print("getting song dets")
@@ -249,7 +250,6 @@ def main(device: display, nfc: pn532):
 
         # if we are driving the motor, kill it
         if motorProcess:
-            motorProcess.join()
             motorProcess.kill()
 
     # Step 3: check to see if any buttons have been pushed. If they have, handle corresponding
@@ -259,7 +259,12 @@ def main(device: display, nfc: pn532):
         def button_playback():
             print("pausing")
             global songInfo
-            songInfo = togglePlayback(sp=sp, songInfo=songInfo, device=device)
+            songInfo = togglePlayback(
+                sp=sp,
+                songInfo=songInfo,
+                device=device,
+                motorProcess=motorProcess,
+            )
 
         def button_skip():
             print("skipping")
