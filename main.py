@@ -38,6 +38,7 @@ songInfo = {
     "album": {"name": "", "cur": "", "end": "", "reverse": False},
     "total_duration": 0,
     "current_duration": 0,
+    "paused": True,
 }
 try:
     buttonStart = Button(4)
@@ -257,7 +258,8 @@ def main(device: display, nfc: pn532):
 
         def button_playback():
             print("pausing")
-            togglePlayback(
+            global songInfo
+            songInfo = togglePlayback(
                 sp=sp, songInfo=songInfo, device=os.getenv("DEVICE_ID")
             )
 
