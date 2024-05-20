@@ -87,7 +87,7 @@ def setup():
         sys.exit(
             "OLED display not found! Make sure the address is correct and the correct driver is selected"
         )
-
+    nfc = 1
     # # Instantiate NFC
     # try:
     #     PN532_I2C = Pn532I2c(1)
@@ -213,16 +213,20 @@ def main(device: display, nfc: pn532):
             # uri = readData(nfc, uid)
             uri = "spotify:album:6iHAKqapZLwgw9yIrVgsUT"
             # transfer playing to our device
+            print("transferring playback")
             sp.transfer_playback(device_id, force_play=False)
             # start playback and update currently playing uri
             # we use context uri as we want to play the album not just an individual track
+            print("playing song")
             sp.start_playback(device_id, context_uri=uri)
             # create a new motorprocess
             # this will be used to ensure that driving the motor doesn't block the loop
+            print("spinning motors")
             motorProcess = Process(target=drive_motor)
             motorProcess.start()
             # tiny delay to ensure current playback will be correct
             time.sleep(1)
+            print("getting song dets")
             songDetails = getSongInfo(sp, device=device)
             songInfo = songDetails
             tagUID = uid
