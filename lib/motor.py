@@ -11,6 +11,7 @@ def drive_motor():
                 [24, 23, 6, 5], 0.0005, 512000, False, False, "half", 0.05
             )
         except KeyboardInterrupt:
+            motor.motor_stop()
             break
 
 
