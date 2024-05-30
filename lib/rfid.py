@@ -41,6 +41,7 @@ if __name__ == "__main__":
     PN532_I2C = Pn532I2c(1)
     nfc = Pn532(PN532_I2C)
     nfc.begin()
+    time.sleep(1)
     nfc.SAMConfig()
     while True:
         print("waiting for card...")
