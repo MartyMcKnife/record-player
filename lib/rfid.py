@@ -43,11 +43,13 @@ if __name__ == "__main__":
     nfc.begin()
     time.sleep(1)
     nfc.SAMConfig()
+    time.sleep(1)
     while True:
         print("waiting for card...")
         success, uid = nfc.readPassiveTargetID(
             pn532.PN532_MIFARE_ISO14443A_106KBPS
         )
+        time.sleep(1)
 
         if success:
             print(readData(nfc, uid))
