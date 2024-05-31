@@ -56,7 +56,7 @@ def togglePlayback(sp=None, songInfo=None, device=None, motorProcess=None):
             print("resuming playback")
             sp.start_playback(device_id=os.getenv("DEVICE_ID"))
             # playing has resumed, so we resume the motor
-            if motorProcess:
+            if motorProcess.is_alive():
                 motorProcess.start()
             songInfo["paused"] = False
         else:

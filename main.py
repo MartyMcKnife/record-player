@@ -247,7 +247,7 @@ def main(device: display, nfc: pn532):
         }
 
         # if we are driving the motor, kill it
-        if motorProcess:
+        if motorProcess.is_alive():
             motorProcess.kill()
 
     # Step 3: check to see if any buttons have been pushed. If they have, handle corresponding
