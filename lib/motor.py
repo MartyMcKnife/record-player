@@ -8,7 +8,7 @@ def drive_motor():
     while True:
         try:
             motor.motor_run(
-                [24, 23, 6, 5], 0.001, 512, False, False, "half", 0.05
+                [24, 23, 6, 5], 0.001, 5120000, False, False, "half", 0.05
             )
         except KeyboardInterrupt:
             print("killing motor")
@@ -17,4 +17,8 @@ def drive_motor():
 
 
 if __name__ == "__main__":
-    drive_motor()
+    try:
+        drive_motor()
+    except KeyboardInterrupt:
+        print("killing motor")
+        motor.motor_stop()
