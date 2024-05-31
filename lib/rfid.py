@@ -49,7 +49,7 @@ if __name__ == "__main__":
         success, uid = nfc.readPassiveTargetID(
             pn532.PN532_MIFARE_ISO14443A_106KBPS
         )
-        time.sleep(1)
+        time.sleep(0.01)
 
         if success:
             print(readData(nfc, uid))

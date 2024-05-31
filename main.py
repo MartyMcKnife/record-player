@@ -271,6 +271,8 @@ def main(device: display, nfc: pn532):
         buttonStart.when_pressed = button_playback
         buttonSkip.when_pressed = button_skip
         setup_buttons = False
+    # break inbetween loops to allow for rfid reader to reset
+    time.sleep(0.01)
 
 
 if __name__ == "__main__":
