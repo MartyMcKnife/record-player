@@ -154,17 +154,9 @@ def main(device: display, nfc: pn532):
             print(e)
             time.sleep(5)
     # # Step 2: Check if there is a new NFC tag present
-    for attempt in range(10):
-        try:
-            success, uid = nfc.readPassiveTargetID(
-                pn532.PN532_MIFARE_ISO14443A_106KBPS
-            )
-        except OSError:
-            print("I/O error, retrying in a sec")
-            print(f"{attempt} tries left")
-            time.sleep(1)
-        else:
-            break
+    success, uid = nfc.readPassiveTargetID(
+        pn532.PN532_MIFARE_ISO14443A_106KBPS
+    )
     # check both we have an NFC tag and a spotify instance
     if success and sp:
         global songInfo
