@@ -100,6 +100,7 @@ def setup():
         nfc.begin()
         time.sleep(1)
         nfc.SAMConfig()
+        time.sleep(1)
     except IOError:
         sys.exit("NFC Reader could not be found!")
 
@@ -154,9 +155,7 @@ def main(device: display, nfc: pn532):
             print(e)
             time.sleep(5)
     # # Step 2: Check if there is a new NFC tag present
-    success, uid = nfc.readPassiveTargetID(
-        pn532.PN532_MIFARE_ISO14443A_106KBPS
-    )
+    success, uid = nfc.readPassiveTargetID(pn532.PN532_MIFARE_ISO14443A_106KBPS)
     # check both we have an NFC tag and a spotify instance
     if success and sp:
         global songInfo

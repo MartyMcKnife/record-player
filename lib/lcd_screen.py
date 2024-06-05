@@ -1,5 +1,5 @@
 from luma.core.render import canvas
-from luma.oled.device import ssd1309, ssd1306
+from luma.oled.device import ssd1306
 from luma.core.interface.serial import i2c
 
 from PIL import Image, ImageFont, ImageDraw
@@ -170,8 +170,7 @@ class display:
             # draw rectangle fill
             # fill is calculated as a percentage of full length, based on the current / rem duration
             print(
-                (currentDuration / totalDuration)
-                * (self.device.width - progressLength)
+                (currentDuration / totalDuration) * (self.device.width - progressLength)
             )
             draw.rectangle(
                 (
@@ -189,10 +188,7 @@ class display:
 
             draw.text(
                 (
-                    self.device.width
-                    - textLength
-                    - self.px
-                    + progressTextPaddding,
+                    self.device.width - textLength - self.px + progressTextPaddding,
                     self.py + (gap * 3),
                 ),
                 progressText,
