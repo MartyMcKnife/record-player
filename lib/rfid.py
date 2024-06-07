@@ -10,9 +10,11 @@ def readData(nfc: Pn532, uid: str) -> str:
         hexArray = []
 
         run = True
-
-        for page in range(5, 216):
+        status, buf = nfc.mifareultralight_ReadPage(3)
+        capacity = int(buf[2]) * 2
+        for page in range(5, capacity):
             if run:
+                time.sleep(0.01)
                 success, raw = nfc.mifareultralight_ReadPage(page)
                 if success:
                     # loop through our page chunk
@@ -24,7 +26,7 @@ def readData(nfc: Pn532, uid: str) -> str:
                         else:
                             hexArray.append(item)
                 # tiny break to reset i2c device
-                time.sleep(0.0000001)
+
             else:
                 break
         # delete our last element in the array as they are a fake 'empty' bit
