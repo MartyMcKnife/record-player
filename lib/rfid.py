@@ -10,6 +10,7 @@ def readData(nfc: Pn532, uid: str) -> str:
         hexArray = []
 
         run = True
+        time.sleep(0.1)
         status, buf = nfc.mifareultralight_ReadPage(3)
         capacity = int(buf[2]) * 2
         for page in range(5, capacity):
@@ -54,9 +55,8 @@ if __name__ == "__main__":
             success, uid = nfc.readPassiveTargetID(
                 pn532.PN532_MIFARE_ISO14443A_106KBPS
             )
+            if success:
+                print(readData(nfc, uid))
         except OSError:
             print("retrying after 1 sec")
             time.sleep(1)
-
-        if success:
-            print(readData(nfc, uid))
