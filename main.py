@@ -155,7 +155,9 @@ def main(device: display, nfc: pn532):
             print(e)
             time.sleep(5)
     # # Step 2: Check if there is a new NFC tag present
-    success, uid = nfc.readPassiveTargetID(pn532.PN532_MIFARE_ISO14443A_106KBPS)
+    success, uid = nfc.readPassiveTargetID(
+        pn532.PN532_MIFARE_ISO14443A_106KBPS
+    )
     # check both we have an NFC tag and a spotify instance
     if success and sp:
         global songInfo
@@ -235,6 +237,8 @@ def main(device: display, nfc: pn532):
         # only pause playback if we were already playing a song
         if songInfo["song_id"]:
             sp.pause_playback()
+        # reset tag uid
+        tagUID = ""
         # clear the songInfo object so nothing else that uses it for checking stuffs up
         songInfo = {
             "song_id": "",
