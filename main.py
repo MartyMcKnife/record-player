@@ -155,6 +155,8 @@ def main(device: display, nfc: pn532):
             print(e)
             time.sleep(5)
     # # Step 2: Check if there is a new NFC tag present
+    # break inbetween loops to allow for rfid reader to reset
+    time.sleep(0.05)
     success, uid = nfc.readPassiveTargetID(
         pn532.PN532_MIFARE_ISO14443A_106KBPS
     )
@@ -276,8 +278,6 @@ def main(device: display, nfc: pn532):
         buttonStart.when_released = button_playback
         buttonSkip.when_released = button_skip
         setup_buttons = False
-    # break inbetween loops to allow for rfid reader to reset
-    time.sleep(0.01)
 
 
 if __name__ == "__main__":
