@@ -217,6 +217,8 @@ def main(device: display, nfc: pn532):
             # transfer playing to our device
             print("transferring playback")
             sp.transfer_playback(device_id, force_play=False)
+            # turn off shuffle
+            sp.shuffle(False, device_id=device_id)
             # start playback and update currently playing uri
             # we use context uri as we want to play the album not just an individual track
             print("playing song")
