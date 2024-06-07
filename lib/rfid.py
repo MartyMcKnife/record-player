@@ -53,4 +53,3 @@ if __name__ == "__main__":
 
         if success:
             print(readData(nfc, uid))
-            break
